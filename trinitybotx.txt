@@ -1,0 +1,104 @@
+import telebot
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+
+
+BOT_TOKEN = ".."
+bot = telebot.TeleBot(BOT_TOKEN)
+
+
+menu = {
+    "Monday": {
+        "Breakfast": "Pav Bhaji, Tea",
+        "Lunch": "Mix Veg, Dal Fry, Green Peas Pulao, Raita, Chapati and Fruits",
+        "Snacks": "Masala Pav, Tea",
+        "Dinner": "Matar Paneer/ Palak Paneer, Black Dal, Chapati, Shahi Tukda",
+        "Image": 'AgACAgUAAxkBAAMdZwPiFleXxx0EbAh9wW8OxHEP0kEAAgLBMRteEyFUXNjTPT_BLVIBAAMCAAN4AAM2BA'  
+    },
+    "Tuesday": {
+        "Breakfast": "Poha, Black Chana/Dalia, Coconut Chutney, Tea",
+        "Lunch": "Rajma Masala, Aloo Bhindi Dry, Rice, Salad, Chapati",
+        "Snacks": "Samosa, Chutney, Coffee",
+        "Dinner": "Chhole Masala, Dal Fry, Chapati, Roti",
+        "Image": 'AgACAgUAAxkBAAMjZwPj_faFiEfmAAHawMGp5sL2z0zBAAIEwTEbXhMhVIi-muRazkoeAQADAgADeAADNgQ'  
+    },
+    "Wednesday": {
+        "Breakfast": "Idli, Sambar, Tea",
+        "Lunch": "Dal Makhni, Cabbage Dry",
+        "Snacks": "Vada Pav, Tea",
+        "Dinner": "Paneer Kofta, Chapati",
+        "Image": 'AgACAgUAAxkBAAMlZwPkLa19E4cBPCoR4eNZb1YuUuEAAgzBMRteEyFUEFQFRwFvP08BAAMCAAN4AAM2BA' 
+    },
+    "Thursday": {
+        "Breakfast": "Puri Bhaji, Tea",
+        "Lunch": "Veg Biryani, Raita",
+        "Snacks": "Poha, Chutney, Coffee",
+        "Dinner": "Aloo Gobi, Chapati",
+        "Image": 'AgACAgUAAxkBAAMnZwPkVDdqTt7HcBKxOk805_VhGwEAAg3BMRteEyFUFR4a7TIyzp4BAAMCAAN4AAM2BA'  
+    },
+    "Friday": {
+        "Breakfast": "Bread Butter Jam, Tea",
+        "Lunch": "Aloo Matar, Rice",
+        "Snacks": "Bread Pakoda",
+        "Dinner": "Paneer Kadahi, Chapati",
+        "Image": 'AgACAgUAAxkBAAMpZwPkii0GmzKUUOZ-6JOBNqaZK0kAAhLBMRteEyFUeHA4bTLipdwBAAMCAAN4AAM2BA'  
+    },
+    "Saturday": {
+        "Breakfast": "Aloo Paratha, Curd, Tea",
+        "Lunch": "Methi Roti, Chhole Bhature, Rice, Boondi Raita",
+        "Snacks": "Bhel (Onion + Chutneys)",
+        "Dinner": "Soyabean Sabzi, Masoor Dal, Rice, Fried Rice",
+        "Image": 'AgACAgUAAxkBAAMrZwPloyskbFHtLWpY4SaAhwkEuM4AAhPBMRteEyFUesspRIn3jnsBAAMCAAN4AAM2BA' 
+    },
+    "Sunday": {
+        "Breakfast": "Onion-Tomato Uttapam, Veg Upma, Sambhar, Tea",
+        "Lunch": "Black Chana Masala, Dal Fry, Raita, Rice",
+        "Snacks": "Cream Bun, Tea",
+        "Dinner": "Aloo Palak, Pulao, Puri, Kheer",
+        "Image": 'AgACAgUAAxkBAAMtZwPl0JtAw7-AFIIeh00C_EmPUJkAAhTBMRteEyFUHRFm5Yjnor0BAAMCAAN4AAM2BA'  
+    }
+}
+
+
+def day_selection_buttons():
+    markup = InlineKeyboardMarkup()
+    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    for day in days:
+        markup.add(InlineKeyboardButton(day, callback_data=day))
+    return markup
+
+
+def meal_selection_buttons(day):
+    markup = InlineKeyboardMarkup()
+    meal_types = ["Breakfast", "Lunch", "Snacks", "Dinner"]
+    for meal in meal_types:
+        markup.add(InlineKeyboardButton(meal, callback_data=f"{day}:{meal}"))
+    return markup
+
+
+@bot.message_handler(commands=['start'])
+def start(message):
+    bot.send_message(message.chat.id, "Hello! Please choose a day:", reply_markup=day_selection_buttons())
+
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_query(call):
+    data = call.data
+    if data in menu:
+        
+        bot.send_message(call.message.chat.id, f"You selected {data}. Now choose a meal type:", reply_markup=meal_selection_buttons(data))
+    elif ":" in data:
+        
+        day, meal_type = data.split(":")
+        if meal_type in menu[day]:
+            
+            bot.send_message(call.message.chat.id, f"Menu for {meal_type} on {day}: {menu[day][meal_type]}")
+            
+            if "Image" in menu[day]:
+                bot.send_photo(call.message.chat.id, menu[day]["Image"])
+        else:
+            bot.send_message(call.message.chat.id, "Invalid selection. Please try again.")
+    else:
+        bot.send_message(call.message.chat.id, "Invalid selection. Please try again.")
+
+
+bot.polling()
